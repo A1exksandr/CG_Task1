@@ -13,40 +13,27 @@ public class Cloud {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.color = new Color(173, 216, 230); // Голубой цвет
+        this.color = new Color(173, 216, 230);
         this.speed = speed;
     }
 
     public void update() {
-        x -= speed; // Двигаем облако слева направо
-        // Если облако ушло за левый край, возвращаем его справа
-        if (x + width < 0) {
-            x = 800; // Возвращаем за правый край экрана
-            y = (int)(Math.random() * 150 + 50); // Случайная высота
-        }
+        x -= speed;
     }
 
-    public void setX(int x) {
-        this.x = x;
-    }
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
 
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
+    public void setX(int x) { this.x = x; }
+    public void setY(int y) { this.y = y; }
 
     void draw(final Graphics gr) {
         Graphics2D g = (Graphics2D) gr;
         g.setColor(color);
 
-        // Рисуем пушистое облако из нескольких кругов
+        // Рисуем пушистое облако
         g.fillOval(x, y, width, height);
         g.fillOval(x + width/3, y - height/4, width, height);
         g.fillOval(x + width/2, y + height/4, width, height);

@@ -11,11 +11,10 @@ public class DrawPanel extends JPanel implements ActionListener {
     private Timer timer;
     private int ticksFromStart = 0;
 
-    // Список для множества амогусов
     private List<Amogus> amogusList;
     private TrafficLight trafficLight;
     private List<Cloud> clouds;
-    private List<Integer> amogusBaseX; // Отдельная базовая позиция для каждого амогуса
+    private List<Integer> amogusBaseX;
 
     public DrawPanel(final int timerDelay) {
         this.TIMER_DELAY = timerDelay;
@@ -26,42 +25,59 @@ public class DrawPanel extends JPanel implements ActionListener {
     }
 
     private void initializeObjects() {
-        // Создаем светофор в правой части экрана
-        this.trafficLight = new TrafficLight(getWidth() - 150, 100, 80, 200);
-
-        // Инициализируем списки
         this.amogusList = new ArrayList<>();
         this.amogusBaseX = new ArrayList<>();
         this.clouds = new ArrayList<>();
 
-        // Создаем 12 амогусов с разными свойствами
-        for (int i = 0; i < 12; i++) {
-            // Разные цвета
-            Color color = new Color(
-                    (int)(Math.random() * 200 + 55),
-                    (int)(Math.random() * 200 + 55),
-                    (int)(Math.random() * 200 + 55)
-            );
+        updatePositions(); // Инициализируем позиции
 
-            // Разные размеры и позиции по Y
-            int sizeVariation = (int)(Math.random() * 60 - 30); // -30 до +30
-            int width = 200 + sizeVariation;
-            int height = 260 + sizeVariation;
-            int y = 150 + i * 35; // Распределяем по вертикали
+        createClouds();
+    }
 
-            Amogus amogus = new Amogus(0, y, width, height, color);
-            amogus.setTrafficLight(trafficLight);
-            amogusList.add(amogus);
-            amogusBaseX.add(50); // Начальная позиция для каждого
+    private void updatePositions() {
+        int panelHeight = getHeight();
+        int panelWidth = getWidth();
+
+        // Обновляем позицию светофора (привязываем к низу)
+        if (trafficLight == null) {
+            trafficLight = new TrafficLight(panelWidth - 150, panelHeight - 320, 80, 200);
+        } else {
+            trafficLight.setX(panelWidth - 150);
+            trafficLight.setY(panelHeight - 420);
         }
 
-        // Создаем облака с учетом размера окна
-        createClouds();
+        // Обновляем или создаем амогусов
+        if (amogusList.isEmpty()) {
+            // Создаем 12 амогусов с привязкой к низу окна
+            for (int i = 0; i < 12; i++) {
+                Color color = new Color(
+                        (int)(Math.random() * 200 + 55),
+                        (int)(Math.random() * 200 + 55),
+                        (int)(Math.random() * 200 + 55)
+                );
+
+                int sizeVariation = (int)(Math.random() * 60 - 30);
+                int width = 200 + sizeVariation;
+                int height = 260 + sizeVariation;
+                int y = panelHeight - 150 - (i * 35); // Привязываем к низу окна
+
+                Amogus amogus = new Amogus(0, y, width, height, color);
+                amogus.setTrafficLight(trafficLight);
+                amogusList.add(amogus);
+                amogusBaseX.add(50);
+            }
+        } else {
+            // Обновляем позиции существующих амогусов
+            for (int i = 0; i < amogusList.size(); i++) {
+                int y = panelHeight - 150 - (i * 35);
+                amogusList.get(i).setY(y);
+            }
+        }
     }
 
     private void createClouds() {
         clouds.clear();
-        int cloudCount = getWidth() / 200; // Количество облаков зависит от ширины окна
+        int cloudCount = getWidth() / 200;
 
         for (int i = 0; i < cloudCount; i++) {
             int x = (int)(Math.random() * getWidth());
@@ -81,34 +97,40 @@ public class DrawPanel extends JPanel implements ActionListener {
         gr.setColor(new Color(135, 206, 235));
         gr.fillRect(0, 0, getWidth(), getHeight());
 
-        // Рисуем землю (1/4 высоты окна)
+        // Рисуем землю (привязываем к низу окна)
         gr.setColor(new Color(34, 139, 34));
         int groundHeight = getHeight() / 4;
-        gr.fillRect(0, getHeight() - groundHeight, getWidth(), groundHeight);
+        int groundY = getHeight() - groundHeight;
+        gr.fillRect(0, groundY, getWidth(), groundHeight);
+
+        // Рисуем тень на земле для объема
+        gr.setColor(new Color(20, 100, 20));
+        for (int i = 0; i < 10; i++) {
+            int alpha = 100 - i * 10;
+            gr.setColor(new Color(20, 100, 20, alpha));
+            gr.fillRect(0, groundY - i, getWidth(), 1);
+        }
 
         // Обновляем и рисуем облака
         for (Cloud cloud : clouds) {
             cloud.update();
-            // Если облако ушло за левый край, перемещаем его вправо за пределы экрана
             if (cloud.getX() + cloud.getWidth() < 0) {
                 cloud.setX(getWidth() + 50);
             }
             cloud.draw(gr);
         }
 
-        // Обновляем позицию светофора при изменении размера окна
-        trafficLight.setX(getWidth() - 150);
-        trafficLight.setY(100);
+        // Обновляем позиции всех объектов
+        updatePositions();
 
-        // Обновляем и рисуем светофор
+        // Обновляем светофор
         trafficLight.update(ticksFromStart);
         trafficLight.draw(gr);
 
-        // Двигаем амогусов только на зеленый свет с разной скоростью
+        // Двигаем амогусов
         for (int i = 0; i < amogusList.size(); i++) {
             if (trafficLight.isGreenLight()) {
-                int newX = amogusBaseX.get(i) + (int)(Math.random() * 3 + 1); // Разная скорость
-                // Если амогус дошел до светофора, возвращаем в начало
+                int newX = amogusBaseX.get(i) + (int)(Math.random() * 3 + 1);
                 if (newX > getWidth() - 250) {
                     newX = 50;
                 }
@@ -121,11 +143,6 @@ public class DrawPanel extends JPanel implements ActionListener {
         for (Amogus amogus : amogusList) {
             amogus.draw(gr);
         }
-
-        // Отладочная информация (можно убрать)
-        gr.setColor(Color.BLACK);
-        gr.drawString("Амогусов: " + amogusList.size() + " | Размер окна: " +
-                getWidth() + "x" + getHeight(), 10, 20);
     }
 
     @Override
@@ -136,9 +153,9 @@ public class DrawPanel extends JPanel implements ActionListener {
         }
     }
 
-    // Метод для обработки изменения размера окна
     public void onResize() {
-        createClouds(); // Пересоздаем облака при изменении размера
-        // Светофор автоматически переместится в paintComponent
+        createClouds();
+        updatePositions();
+        repaint();
     }
 }

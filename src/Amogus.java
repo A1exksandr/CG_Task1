@@ -37,6 +37,21 @@ public class Amogus {
     public int getX() {
         return x;
     }
+    public Color getColor() {
+        return color;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
 
     public void setY(int y) {
         this.y = y;
@@ -105,4 +120,5 @@ public class Amogus {
 
         // Убрали красную точку - теперь ее нет совсем
     }
+
 }
